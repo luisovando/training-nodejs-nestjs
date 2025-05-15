@@ -22,3 +22,18 @@ describe('GET /', () => {
     expect(response.statusCode).toBe(200);
   });
 });
+
+describe('GET /status', () => {
+  it('should respond with status ok and uptime', async () => {
+    const response = await request(`http://localhost:${PORT}/status`);
+    const body = await response?.body.json();
+
+    expect(response.statusCode).toBe(200);
+    expect(body).toEqual(
+      expect.objectContaining({
+        status: 'ok',
+      })
+    );
+    expect(typeof body.uptime).toBe('number');
+  });
+});

@@ -11,6 +11,11 @@ export function createServer() {
         .setHeader('Content-Type', 'application/json')
         .writeHead(200)
         .end(JSON.stringify({ message: 'Hello from Node.js server' }));
+    } else if (req.method === 'GET' && req.url === '/status') {
+      return res
+        .setHeader('Content-Type', 'application/json')
+        .writeHead(200)
+        .end(JSON.stringify({ status: 'ok', uptime: process.uptime() }));
     } else {
       return res
         .setHeader('Content-Type', 'application/json')
