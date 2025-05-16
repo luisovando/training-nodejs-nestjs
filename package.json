@@ -8,6 +8,7 @@
     "dev": "ts-node",
     "build": "tsc",
     "test": "vitest",
+    "test:api": "vitest run fundamentos-nodejs/2-file-api",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write ."
