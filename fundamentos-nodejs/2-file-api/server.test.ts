@@ -2,7 +2,7 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import http from 'http';
 import { resolve } from 'path';
 import { request } from 'undici';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
 import { createServer } from './server';
 
 const filePath = resolve(process.cwd(), 'fundamentos-nodejs/2-file-api/data.json');
@@ -106,11 +106,12 @@ describe('POST /file', () => {
 });
 
 describe('GET /external', () => {
-  beforeEach(() => {
-    if (existsSync(filePath)) unlinkSync(filePath);
-  });
-
   describe('when the external API response with content', () => {
+    beforeEach(() => {
+      if (existsSync(filePath)) unlinkSync(filePath);
+      global.fetch = fetch;
+    });
+
     it('should proxy the external API and respond 200 with its data', async () => {
       const { statusCode, body } = await request(`http://localhost:${PORT}/external`);
       const json = await body.json();
@@ -137,10 +138,12 @@ describe('GET /external', () => {
     const originalFetch = global.fetch;
 
     beforeAll(() => {
+      if (existsSync(filePath)) unlinkSync(filePath);
       global.fetch = () => Promise.reject(new Error('external down')) as any;
     });
 
     afterAll(() => {
+      if (existsSync(filePath)) unlinkSync(filePath);
       global.fetch = originalFetch;
     });
 
@@ -151,5 +154,30 @@ describe('GET /external', () => {
       expect(statusCode).toBe(502);
       expect(json).toEqual({ error: 'External service unavailable' });
     });
+  });
+});
+
+describe('GET /external - with cached content', () => {
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    const cachedData = JSON.stringify({ cached: true });
+    writeFileSync(filePath, cachedData, 'utf-8');
+    global.fetch = () => {
+      throw new Error('fetch should NOT be called.');
+    };
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    if (existsSync(filePath)) unlinkSync(filePath);
+  });
+
+  it('should serve data from cache and not call external API', async () => {
+    const { statusCode, body } = await request(`http://localhost:${PORT}/external`);
+    const json = await body.json();
+
+    expect(statusCode).toBe(200);
+    expect(json).toEqual({ cached: true });
   });
 });
