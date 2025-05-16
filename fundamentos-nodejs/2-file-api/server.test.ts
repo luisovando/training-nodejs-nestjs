@@ -104,3 +104,23 @@ describe('POST /file', () => {
     });
   });
 });
+
+describe('GET /external', () => {
+  beforeEach(() => {
+    if (existsSync(filePath)) unlinkSync(filePath);
+  });
+
+  describe('when the external API response with content', () => {
+    it('should proxy the external API and respond 200 with its data', async () => {
+      const { statusCode, body } = await request(`http://localhost:${PORT}/external`);
+      const json = await body.json();
+
+      expect(statusCode).toBe(200);
+      expect(json).toEqual(
+        expect.objectContaining({
+          userId: 1,
+        })
+      );
+    });
+  });
+});
