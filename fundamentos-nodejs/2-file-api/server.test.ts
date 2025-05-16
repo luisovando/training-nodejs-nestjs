@@ -122,5 +122,14 @@ describe('GET /external', () => {
         })
       );
     });
+
+    it('should save the external content in data.json file', async () => {
+      await request(`http://localhost:${PORT}/external`);
+
+      expect(existsSync(filePath)).toBe(true);
+
+      const content = JSON.parse(readFileSync(filePath, 'utf-8'));
+      expect(content).toHaveProperty('userId', 1);
+    });
   });
 });
