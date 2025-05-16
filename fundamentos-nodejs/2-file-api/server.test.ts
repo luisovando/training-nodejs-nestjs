@@ -2,11 +2,13 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import http from 'http';
 import { resolve } from 'path';
 import { request } from 'undici';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
 import { createServer } from './server';
 
 const filePath = resolve(process.cwd(), 'fundamentos-nodejs/2-file-api/data.json');
 const PORT = 3000;
+const invalidJsonBodies = [['null'], ['[]'], ['42'], ['"hello"'], ['true']];
+
 let server = http.createServer();
 
 beforeAll(() => {
@@ -69,6 +71,36 @@ describe('POST /file', () => {
         })
       );
       expect(content).toEqual(requestBody);
+    });
+  });
+
+  describe('when payload is not valid JSON', () => {
+    it('should response with 400 and error message', async () => {
+      const { statusCode, body } = await request(`http://localhost:${PORT}/file`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: 'not a json',
+      });
+
+      const json = await body.json();
+
+      expect(statusCode).toBe(400);
+      expect(json).toEqual({ error: 'Invalid JSON payload' });
+    });
+  });
+
+  describe('when JSON is valid but not an object', () => {
+    test.each(invalidJsonBodies)('should return 400 for body: %s', async (bodyValue) => {
+      const { statusCode, body } = await request(`http://localhost:${PORT}/file`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: bodyValue,
+      });
+
+      const json = await body.json();
+
+      expect(statusCode).toBe(400);
+      expect(json).toEqual({ error: 'Invalid JSON payload' });
     });
   });
 });
