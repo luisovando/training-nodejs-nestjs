@@ -132,4 +132,24 @@ describe('GET /external', () => {
       expect(content).toHaveProperty('userId', 1);
     });
   });
+
+  describe('when external API fail', () => {
+    const originalFetch = global.fetch;
+
+    beforeAll(() => {
+      global.fetch = () => Promise.reject(new Error('external down')) as any;
+    });
+
+    afterAll(() => {
+      global.fetch = originalFetch;
+    });
+
+    it('should respond with 502 and error message', async () => {
+      const { statusCode, body } = await request(`http://localhost:${PORT}/external`);
+      const json = await body.json();
+
+      expect(statusCode).toBe(502);
+      expect(json).toEqual({ error: 'External service unavailable' });
+    });
+  });
 });

@@ -8,11 +8,18 @@ export async function handleExternal(res: ServerResponse) {
   const __dirname = dirname(__filename);
   const filePath = resolve(__dirname, '../data.json');
 
-  const response = await fetch('https://jsonplaceholder.typicode.com/todos/1');
-  const data = await response.json();
-  const content = JSON.stringify(data);
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/todos/1');
+    const data = await response.json();
+    const content = JSON.stringify(data);
 
-  await writeFile(filePath, content, 'utf-8');
+    await writeFile(filePath, content, 'utf-8');
 
-  res.setHeader('Content-Type', 'application/json').writeHead(200).end(content);
+    res.setHeader('Content-Type', 'application/json').writeHead(200).end(content);
+  } catch (err) {
+    res
+      .setHeader('Content-Type', 'application/json')
+      .writeHead(502)
+      .end(JSON.stringify({ error: 'External service unavailable' }));
+  }
 }
